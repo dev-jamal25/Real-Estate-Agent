@@ -1,0 +1,17 @@
+# Docker ignore file
+.git
+.gitignore
+.env
+.env.local
+README.md
+docs/
+notebooks/
+tests/
+scripts/
+.pytest_cache/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.coverage
+htmlcov/

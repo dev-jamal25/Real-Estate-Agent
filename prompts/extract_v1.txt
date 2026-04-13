@@ -1,0 +1,2 @@
+"""Feature extraction prompt v1."""
+# TODO: Write deterministic extraction prompt

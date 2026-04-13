@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "real-estate-agent"
+version = "0.1.0"
+description = "AI Real Estate Agent with LLM extraction, ML prediction, and FastAPI backend"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.git
+  | \.venv
+  | __pycache__
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["app"]
+default_section = "THIRDPARTY"
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+exclude = [".git", ".venv", "__pycache__", "build", "dist"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+follow_imports = "normal"
+
+[[tool.mypy.overrides]]
+module = [
+    "sklearn.*",
+    "pandas.*",
+    "numpy.*",
+    "uvicorn.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --cov=app --cov-report=html --cov-report=term-missing"

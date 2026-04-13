@@ -1,0 +1,2 @@
+"""Feature extraction prompt v2 (alternative)."""
+# TODO: Write alternate extraction prompt for comparison
