@@ -1,0 +1,502 @@
+[
+    {
+        "timestamp": "2026-04-16T19:45:42.089351+00:00",
+        "case_id": "q1_partial_first_description",
+        "version": "v1",
+        "input": {
+            "query": "I want a house built in 1998 with 2 full bathrooms, a garage for 2 cars, and a good kitchen.",
+            "current_known_features": {}
+        },
+        "output": {
+            "extracted_features": {
+                "OverallQual": null,
+                "GrLivArea": null,
+                "TotalBsmtSF": null,
+                "GarageCars": 2,
+                "Neighborhood": null,
+                "ExterQual": null,
+                "YearBuilt": 1998,
+                "FullBath": 2,
+                "KitchenQual": "Gd",
+                "BsmtQual": null,
+                "TotRmsAbvGrd": null,
+                "LotArea": null
+            },
+            "missing_features": [
+                "OverallQual",
+                "GrLivArea",
+                "TotalBsmtSF",
+                "Neighborhood",
+                "ExterQual",
+                "BsmtQual",
+                "TotRmsAbvGrd",
+                "LotArea"
+            ],
+            "is_complete": false,
+            "reply": "Please provide OverallQual (1-10), GrLivArea (sq ft), TotalBsmtSF (sq ft), Neighborhood, ExterQual, BsmtQual, TotRmsAbvGrd, and LotArea (sq ft)."
+        },
+        "expected": {
+            "extracted_features": {
+                "YearBuilt": 1998,
+                "FullBath": 2,
+                "GarageCars": 2,
+                "KitchenQual": "Gd"
+            },
+            "missing_features": [
+                "OverallQual",
+                "GrLivArea",
+                "TotalBsmtSF",
+                "Neighborhood",
+                "ExterQual",
+                "BsmtQual",
+                "TotRmsAbvGrd",
+                "LotArea"
+            ],
+            "is_complete": false,
+            "reply": "I still need the overall quality from 1 to 10, the above-ground living area in square feet, and the basement size in square feet."
+        },
+        "validation": {
+            "passed": true,
+            "errors": []
+        }
+    },
+    {
+        "timestamp": "2026-04-16T19:45:46.070763+00:00",
+        "case_id": "q1_partial_first_description",
+        "version": "v2",
+        "input": {
+            "query": "I want a house built in 1998 with 2 full bathrooms, a garage for 2 cars, and a good kitchen.",
+            "current_known_features": {}
+        },
+        "output": {
+            "extracted_features": {
+                "OverallQual": null,
+                "GrLivArea": null,
+                "TotalBsmtSF": null,
+                "GarageCars": 2,
+                "Neighborhood": null,
+                "ExterQual": null,
+                "YearBuilt": 1998,
+                "FullBath": 2,
+                "KitchenQual": "Gd",
+                "BsmtQual": null,
+                "TotRmsAbvGrd": null,
+                "LotArea": null
+            },
+            "missing_features": [
+                "OverallQual",
+                "GrLivArea",
+                "TotalBsmtSF",
+                "Neighborhood",
+                "ExterQual",
+                "BsmtQual",
+                "TotRmsAbvGrd",
+                "LotArea"
+            ],
+            "is_complete": false,
+            "reply": "I still need the overall quality from 1 to 10, the above-ground living area in square feet, and the total basement area in square feet."
+        },
+        "expected": {
+            "extracted_features": {
+                "YearBuilt": 1998,
+                "FullBath": 2,
+                "GarageCars": 2,
+                "KitchenQual": "Gd"
+            },
+            "missing_features": [
+                "OverallQual",
+                "GrLivArea",
+                "TotalBsmtSF",
+                "Neighborhood",
+                "ExterQual",
+                "BsmtQual",
+                "TotRmsAbvGrd",
+                "LotArea"
+            ],
+            "is_complete": false,
+            "reply": "I still need the overall quality from 1 to 10, the above-ground living area in square feet, and the basement size in square feet."
+        },
+        "validation": {
+            "passed": true,
+            "errors": []
+        }
+    },
+    {
+        "timestamp": "2026-04-16T19:45:48.749475+00:00",
+        "case_id": "q2_follow_up_completion_turn",
+        "version": "v1",
+        "input": {
+            "query": "The above-ground living area is 1850 square feet, the basement is 900 square feet, and the lot is around 8200 square feet.",
+            "current_known_features": {
+                "YearBuilt": 1998,
+                "FullBath": 2,
+                "GarageCars": 2,
+                "KitchenQual": "Gd"
+            }
+        },
+        "output": {
+            "extracted_features": {
+                "OverallQual": null,
+                "GrLivArea": 1850,
+                "TotalBsmtSF": 900,
+                "GarageCars": 2,
+                "Neighborhood": null,
+                "ExterQual": null,
+                "YearBuilt": 1998,
+                "FullBath": 2,
+                "KitchenQual": "Gd",
+                "BsmtQual": null,
+                "TotRmsAbvGrd": null,
+                "LotArea": 8200
+            },
+            "missing_features": [
+                "OverallQual",
+                "Neighborhood",
+                "ExterQual",
+                "BsmtQual",
+                "TotRmsAbvGrd"
+            ],
+            "is_complete": false,
+            "reply": "Please provide values for OverallQual (1-10), Neighborhood, ExterQual (None/Poor/Fair/Typical/Average/Good/Excellent), BsmtQual (None/Poor/Fair/Typical/Average/Good/Excellent), and TotRmsAbvGrd."
+        },
+        "expected": {
+            "extracted_features": {
+                "GrLivArea": 1850,
+                "TotalBsmtSF": 900,
+                "LotArea": 8200,
+                "YearBuilt": 1998,
+                "FullBath": 2,
+                "GarageCars": 2,
+                "KitchenQual": "Gd"
+            },
+            "missing_features": [
+                "OverallQual",
+                "Neighborhood",
+                "ExterQual",
+                "BsmtQual",
+                "TotRmsAbvGrd"
+            ],
+            "is_complete": false,
+            "reply": "I still need the overall quality from 1 to 10, the neighborhood, and the exterior quality."
+        },
+        "validation": {
+            "passed": true,
+            "errors": []
+        }
+    },
+    {
+        "timestamp": "2026-04-16T19:45:50.758645+00:00",
+        "case_id": "q2_follow_up_completion_turn",
+        "version": "v2",
+        "input": {
+            "query": "The above-ground living area is 1850 square feet, the basement is 900 square feet, and the lot is around 8200 square feet.",
+            "current_known_features": {
+                "YearBuilt": 1998,
+                "FullBath": 2,
+                "GarageCars": 2,
+                "KitchenQual": "Gd"
+            }
+        },
+        "output": {
+            "extracted_features": {
+                "OverallQual": null,
+                "GrLivArea": 1850,
+                "TotalBsmtSF": 900,
+                "GarageCars": 2,
+                "Neighborhood": null,
+                "ExterQual": null,
+                "YearBuilt": 1998,
+                "FullBath": 2,
+                "KitchenQual": "Gd",
+                "BsmtQual": null,
+                "TotRmsAbvGrd": null,
+                "LotArea": 8200
+            },
+            "missing_features": [
+                "OverallQual",
+                "Neighborhood",
+                "ExterQual",
+                "BsmtQual",
+                "TotRmsAbvGrd"
+            ],
+            "is_complete": false,
+            "reply": "I still need the overall quality from 1 to 10, the neighborhood name, and the exterior quality."
+        },
+        "expected": {
+            "extracted_features": {
+                "GrLivArea": 1850,
+                "TotalBsmtSF": 900,
+                "LotArea": 8200,
+                "YearBuilt": 1998,
+                "FullBath": 2,
+                "GarageCars": 2,
+                "KitchenQual": "Gd"
+            },
+            "missing_features": [
+                "OverallQual",
+                "Neighborhood",
+                "ExterQual",
+                "BsmtQual",
+                "TotRmsAbvGrd"
+            ],
+            "is_complete": false,
+            "reply": "I still need the overall quality from 1 to 10, the neighborhood, and the exterior quality."
+        },
+        "validation": {
+            "passed": true,
+            "errors": []
+        }
+    },
+    {
+        "timestamp": "2026-04-16T19:45:52.878992+00:00",
+        "case_id": "q3_ordinal_mapping_stress_test",
+        "version": "v1",
+        "input": {
+            "query": "The exterior quality should be Excellent, the kitchen quality Good, and the basement quality Fair.",
+            "current_known_features": {}
+        },
+        "output": {
+            "extracted_features": {
+                "OverallQual": null,
+                "GrLivArea": null,
+                "TotalBsmtSF": null,
+                "GarageCars": null,
+                "Neighborhood": null,
+                "ExterQual": "Ex",
+                "YearBuilt": null,
+                "FullBath": null,
+                "KitchenQual": "Gd",
+                "BsmtQual": "Fa",
+                "TotRmsAbvGrd": null,
+                "LotArea": null
+            },
+            "missing_features": [
+                "OverallQual",
+                "GrLivArea",
+                "TotalBsmtSF",
+                "GarageCars",
+                "Neighborhood",
+                "YearBuilt",
+                "FullBath",
+                "TotRmsAbvGrd",
+                "LotArea"
+            ],
+            "is_complete": false,
+            "reply": "Please provide the most important missing features: OverallQual (1-10), GrLivArea (sq ft), TotalBsmtSF (sq ft), GarageCars, Neighborhood, YearBuilt, FullBath, KitchenQual (already provided), TotRmsAbv"
+        },
+        "expected": {
+            "extracted_features": {
+                "ExterQual": "Ex",
+                "KitchenQual": "Gd",
+                "BsmtQual": "Fa"
+            },
+            "missing_features": [
+                "OverallQual",
+                "GrLivArea",
+                "TotalBsmtSF",
+                "GarageCars",
+                "Neighborhood",
+                "YearBuilt",
+                "FullBath",
+                "TotRmsAbvGrd",
+                "LotArea"
+            ],
+            "is_complete": false,
+            "reply": "I still need the overall quality from 1 to 10, the year built, and the number of full bathrooms."
+        },
+        "validation": {
+            "passed": true,
+            "errors": []
+        }
+    },
+    {
+        "timestamp": "2026-04-16T19:45:55.661188+00:00",
+        "case_id": "q3_ordinal_mapping_stress_test",
+        "version": "v2",
+        "input": {
+            "query": "The exterior quality should be Excellent, the kitchen quality Good, and the basement quality Fair.",
+            "current_known_features": {}
+        },
+        "output": {
+            "extracted_features": {
+                "OverallQual": null,
+                "GrLivArea": null,
+                "TotalBsmtSF": null,
+                "GarageCars": null,
+                "Neighborhood": null,
+                "ExterQual": "Ex",
+                "YearBuilt": null,
+                "FullBath": null,
+                "KitchenQual": "Gd",
+                "BsmtQual": "Fa",
+                "TotRmsAbvGrd": null,
+                "LotArea": null
+            },
+            "missing_features": [
+                "OverallQual",
+                "GrLivArea",
+                "TotalBsmtSF",
+                "GarageCars",
+                "Neighborhood",
+                "YearBuilt",
+                "FullBath",
+                "TotRmsAbvGrd",
+                "LotArea"
+            ],
+            "is_complete": false,
+            "reply": "I still need the overall quality from 1 to 10, the above-ground living area in square feet, and the total basement area in square feet."
+        },
+        "expected": {
+            "extracted_features": {
+                "ExterQual": "Ex",
+                "KitchenQual": "Gd",
+                "BsmtQual": "Fa"
+            },
+            "missing_features": [
+                "OverallQual",
+                "GrLivArea",
+                "TotalBsmtSF",
+                "GarageCars",
+                "Neighborhood",
+                "YearBuilt",
+                "FullBath",
+                "TotRmsAbvGrd",
+                "LotArea"
+            ],
+            "is_complete": false,
+            "reply": "I still need the overall quality from 1 to 10, the year built, and the number of full bathrooms."
+        },
+        "validation": {
+            "passed": true,
+            "errors": []
+        }
+    },
+    {
+        "timestamp": "2026-04-16T19:45:57.708403+00:00",
+        "case_id": "q4_vague_non_usable_wording",
+        "version": "v1",
+        "input": {
+            "query": "I want something beautiful, spacious, in a lovely area, and kind of old-fashioned.",
+            "current_known_features": {}
+        },
+        "output": {
+            "extracted_features": {
+                "OverallQual": null,
+                "GrLivArea": null,
+                "TotalBsmtSF": null,
+                "GarageCars": null,
+                "Neighborhood": null,
+                "ExterQual": null,
+                "YearBuilt": null,
+                "FullBath": null,
+                "KitchenQual": null,
+                "BsmtQual": null,
+                "TotRmsAbvGrd": null,
+                "LotArea": null
+            },
+            "missing_features": [
+                "OverallQual",
+                "GrLivArea",
+                "TotalBsmtSF",
+                "GarageCars",
+                "Neighborhood",
+                "ExterQual",
+                "YearBuilt",
+                "FullBath",
+                "KitchenQual",
+                "BsmtQual",
+                "TotRmsAbvGrd",
+                "LotArea"
+            ],
+            "is_complete": false,
+            "reply": "Could you provide specific values for the required features: OverallQual (1-10), GrLivArea (sq ft), TotalBsmtSF (sq ft), GarageCars (count), Neighborhood, ExterQual, YearBuilt, FullBath, KitchenQual, "
+        },
+        "expected": {
+            "extracted_features": {},
+            "missing_features": [
+                "OverallQual",
+                "GrLivArea",
+                "TotalBsmtSF",
+                "GarageCars",
+                "Neighborhood",
+                "ExterQual",
+                "YearBuilt",
+                "FullBath",
+                "KitchenQual",
+                "BsmtQual",
+                "TotRmsAbvGrd",
+                "LotArea"
+            ],
+            "is_complete": false,
+            "reply": "I need a few concrete details to continue: the overall quality from 1 to 10, the above-ground living area in square feet, and the year built."
+        },
+        "validation": {
+            "passed": true,
+            "errors": []
+        }
+    },
+    {
+        "timestamp": "2026-04-16T19:46:00.186603+00:00",
+        "case_id": "q4_vague_non_usable_wording",
+        "version": "v2",
+        "input": {
+            "query": "I want something beautiful, spacious, in a lovely area, and kind of old-fashioned.",
+            "current_known_features": {}
+        },
+        "output": {
+            "extracted_features": {
+                "OverallQual": null,
+                "GrLivArea": null,
+                "TotalBsmtSF": null,
+                "GarageCars": null,
+                "Neighborhood": null,
+                "ExterQual": null,
+                "YearBuilt": null,
+                "FullBath": null,
+                "KitchenQual": null,
+                "BsmtQual": null,
+                "TotRmsAbvGrd": null,
+                "LotArea": null
+            },
+            "missing_features": [
+                "OverallQual",
+                "GrLivArea",
+                "TotalBsmtSF",
+                "GarageCars",
+                "Neighborhood",
+                "ExterQual",
+                "YearBuilt",
+                "FullBath",
+                "KitchenQual",
+                "BsmtQual",
+                "TotRmsAbvGrd",
+                "LotArea"
+            ],
+            "is_complete": false,
+            "reply": "I still need the overall quality from 1 to 10, the above-ground living area in square feet, and the lot size in square feet."
+        },
+        "expected": {
+            "extracted_features": {},
+            "missing_features": [
+                "OverallQual",
+                "GrLivArea",
+                "TotalBsmtSF",
+                "GarageCars",
+                "Neighborhood",
+                "ExterQual",
+                "YearBuilt",
+                "FullBath",
+                "KitchenQual",
+                "BsmtQual",
+                "TotRmsAbvGrd",
+                "LotArea"
+            ],
+            "is_complete": false,
+            "reply": "I need a few concrete details to continue: the overall quality from 1 to 10, the above-ground living area in square feet, and the year built."
+        },
+        "validation": {
+            "passed": true,
+            "errors": []
+        }
+    }
+]
