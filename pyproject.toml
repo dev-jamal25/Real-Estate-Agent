@@ -9,6 +9,9 @@ description = "AI Real Estate Agent with LLM extraction, ML prediction, and Fast
 readme = "README.md"
 requires-python = ">=3.12"
 license = {text = "MIT"}
+dependencies = [
+    "uvicorn>=0.44.0",
+]
 
 [tool.black]
 line-length = 88
@@ -57,3 +60,4 @@ python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 addopts = "-v --cov=app --cov-report=html --cov-report=term-missing"
+

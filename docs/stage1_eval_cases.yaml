@@ -1,0 +1,108 @@
+meta:
+  purpose: Compare Stage 1 extraction prompt variants.
+  strict_checks:
+    - valid_json
+    - correct_field_names
+    - correct_mapped_values
+    - no_guessed_values
+    - correct_is_complete
+    - correct_missing_features_after_considering_current_state
+  soft_checks:
+    - assistant_message_is_short
+    - assistant_message_asks_for_only_a_few_missing_fields
+    - assistant_message_uses_user_friendly_wording
+    - assistant_message_mentions_units_or_ranges_when_useful
+
+cases:
+  - id: q1_partial_first_description
+    description: Basic extraction from an initial user message.
+    input_query: I want a house built in 1998 with 2 full bathrooms, a garage for 2 cars, and a good kitchen.
+    current_known_feature_state: {}
+    expected_json:
+      extracted_features:
+        YearBuilt: 1998
+        FullBath: 2
+        GarageCars: 2
+        KitchenQual: Gd
+      missing_features:
+        - OverallQual
+        - GrLivArea
+        - TotalBsmtSF
+        - Neighborhood
+        - ExterQual
+        - BsmtQual
+        - TotRmsAbvGrd
+        - LotArea
+      is_complete: false
+      assistant_message: I still need the overall quality from 1 to 10, the above-ground living area in square feet, and the basement size in square feet.
+
+  - id: q2_follow_up_completion_turn
+    description: Extract only new values from the latest turn while using current state for completeness.
+    input_query: The above-ground living area is 1850 square feet, the basement is 900 square feet, and the lot is around 8200 square feet.
+    current_known_feature_state:
+      YearBuilt: 1998
+      FullBath: 2
+      GarageCars: 2
+      KitchenQual: Gd
+    expected_json:
+      extracted_features:
+        GrLivArea: 1850
+        TotalBsmtSF: 900
+        LotArea: 8200
+      missing_features:
+        - OverallQual
+        - Neighborhood
+        - ExterQual
+        - BsmtQual
+        - TotRmsAbvGrd
+      is_complete: false
+      assistant_message: I still need the overall quality from 1 to 10, the neighborhood, and the exterior quality.
+    notes:
+      - extracted_features should contain only new values from this turn
+      - previous values from current_known_feature_state should not be copied into extracted_features
+
+  - id: q3_ordinal_mapping_stress_test
+    description: Validate user-facing quality labels are mapped to model-facing tokens.
+    input_query: The exterior quality should be Excellent, the kitchen quality Good, and the basement quality Fair.
+    current_known_feature_state: {}
+    expected_json:
+      extracted_features:
+        ExterQual: Ex
+        KitchenQual: Gd
+        BsmtQual: Fa
+      missing_features:
+        - OverallQual
+        - GrLivArea
+        - TotalBsmtSF
+        - GarageCars
+        - Neighborhood
+        - YearBuilt
+        - FullBath
+        - TotRmsAbvGrd
+        - LotArea
+      is_complete: false
+      assistant_message: I still need the overall quality from 1 to 10, the year built, and the number of full bathrooms.
+
+  - id: q4_vague_non_usable_wording
+    description: Hallucination resistance test. Vague wording should not become structured values.
+    input_query: I want something beautiful, spacious, in a lovely area, and kind of old-fashioned.
+    current_known_feature_state: {}
+    expected_json:
+      extracted_features: {}
+      missing_features:
+        - OverallQual
+        - GrLivArea
+        - TotalBsmtSF
+        - GarageCars
+        - Neighborhood
+        - ExterQual
+        - YearBuilt
+        - FullBath
+        - KitchenQual
+        - BsmtQual
+        - TotRmsAbvGrd
+        - LotArea
+      is_complete: false
+      assistant_message: I need a few concrete details to continue: the overall quality from 1 to 10, the above-ground living area in square feet, and the year built.
+    notes:
+      - any extracted structured value should usually be treated as a failure for this case
