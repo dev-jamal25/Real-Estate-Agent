@@ -142,21 +142,6 @@ class OllamaClient:
 
 
 class GeminiClient:
-    """
-    Wrapper for Gemini API using google-genai SDK.
-
-    Communicates with Gemini via the google-genai Python SDK.
-    Primary provider: Gemini
-    Fallback provider: Ollama (local, dev-only)
-
-    Fallback is triggered only on allowed provider errors:
-    - quota/rate-limit errors
-    - timeout errors
-    - 5xx/temporary service failures
-    - provider unavailable errors
-
-    Fallback does NOT hide real issues like JSON/schema validation errors.
-    """
 
     def __init__(
         self,
@@ -172,22 +157,7 @@ class GeminiClient:
         ollama_model: str,
         ollama_timeout: int,
     ):
-        """
-        Initialize the Gemini client.
-
-        Args:
-            use_mock: Use mock client instead of real API (default True)
-            api_key: Gemini API key (only used if use_mock=False)
-            model_name: Gemini model name (e.g., gemini-2.5-flash)
-            enable_fallback: Enable Ollama fallback (default False, dev/local only)
-            fallback_on_quota: Fallback when Gemini hits quota (default True)
-            fallback_on_timeout: Fallback when Gemini times out (default True)
-            fallback_on_5xx: Fallback when Gemini returns 5xx (default True)
-            ollama_enabled: Enable Ollama support (default False)
-            ollama_base_url: Ollama base URL (default http://localhost:11434)
-            ollama_model: Ollama model name (default llama3.2:1b)
-            ollama_timeout: Ollama timeout in seconds (default 30)
-        """
+        
         self.use_mock = use_mock
         self.api_key = api_key
         self.model_name = model_name
@@ -230,21 +200,7 @@ class GeminiClient:
             )
 
     def generate_stage1_response(self, prompt: str) -> str:
-        """
-        Generate a Stage 1 extraction response from the prompt.
 
-        Tries Gemini first via SDK. On allowed provider errors (quota, timeout, 5xx),
-        falls back to Ollama if configured and enabled.
-
-        Args:
-            prompt: Full prompt with context injected
-
-        Returns:
-            JSON string with extraction result
-
-        Raises:
-            ProviderError: If both primary and fallback fail
-        """
         if self.use_mock:
             return self.mock_client.generate_stage1_response(prompt)
 
@@ -252,43 +208,48 @@ class GeminiClient:
         try:
             response = self.genai_client.models.generate_content(
                 model=self.model_name,
-                contents=prompt
+                contents=prompt,
+                temperature=0,
             )
             logger.debug("Stage 1 response generated via Gemini")
             return response.text
-        except ProviderQuotaError as e:
-            if self.enable_fallback and self.fallback_on_quota:
-                logger.warning(
-                    f"Gemini quota error; attempting Ollama fallback: {e}"
-                )
-                return self._try_ollama_fallback(prompt)
-            raise
-        except ProviderTimeoutError as e:
-            if self.enable_fallback and self.fallback_on_timeout:
-                logger.warning(
-                    f"Gemini timeout; attempting Ollama fallback: {e}"
-                )
-                return self._try_ollama_fallback(prompt)
-            raise
-        except ProviderServerError as e:
-            if self.enable_fallback and self.fallback_on_5xx:
-                logger.warning(
-                    f"Gemini server error; attempting Ollama fallback: {e}"
-                )
-                return self._try_ollama_fallback(prompt)
-            raise
-        except ProviderUnavailableError as e:
-            if self.enable_fallback:
-                logger.warning(
-                    f"Gemini unavailable; attempting Ollama fallback: {e}"
-                )
-                return self._try_ollama_fallback(prompt)
-            raise
         except Exception as e:
-            # For other exceptions (JSON, validation, etc.), don't fallback
-            # These are real bugs, not provider issues
-            logger.error(f"Stage 1 generation failed: {type(e).__name__}: {e}")
-            raise
+            # Map google-genai SDK errors to our custom ProviderError types
+            gemini_error = self._handle_gemini_error(e)
+            
+            if isinstance(gemini_error, ProviderQuotaError):
+                if self.enable_fallback and self.fallback_on_quota:
+                    logger.warning(
+                        f"Gemini quota/credits exhausted; attempting Ollama fallback: {e}"
+                    )
+                    return self._try_ollama_fallback(prompt)
+                raise gemini_error
+            elif isinstance(gemini_error, ProviderTimeoutError):
+                if self.enable_fallback and self.fallback_on_timeout:
+                    logger.warning(
+                        f"Gemini timeout; attempting Ollama fallback: {e}"
+                    )
+                    return self._try_ollama_fallback(prompt)
+                raise gemini_error
+            elif isinstance(gemini_error, ProviderServerError):
+                if self.enable_fallback and self.fallback_on_5xx:
+                    logger.warning(
+                        f"Gemini server error; attempting Ollama fallback: {e}"
+                    )
+                    return self._try_ollama_fallback(prompt)
+                raise gemini_error
+            elif isinstance(gemini_error, ProviderUnavailableError):
+                if self.enable_fallback:
+                    logger.warning(
+                        f"Gemini unavailable; attempting Ollama fallback: {e}"
+                    )
+                    return self._try_ollama_fallback(prompt)
+                raise gemini_error
+            else:
+                # For other exceptions (JSON, validation, etc.), don't fallback
+                # These are real bugs, not provider issues
+                logger.error(f"Stage 1 generation failed: {type(e).__name__}: {e}")
+                raise
 
     def _try_ollama_fallback(self, prompt: str) -> str:
         """
@@ -303,3 +264,94 @@ class GeminiClient:
         Raises:
             ProviderError: If Ollama fallback fails
         """
+        if not self.ollama_client:
+            raise ProviderUnavailableError(
+                "Ollama fallback requested but not configured. "
+                "Set enable_fallback=True and ollama_enabled=True to use Ollama fallback."
+            )
+
+        try:
+            logger.info(
+                f"Attempting Stage 1 extraction with Ollama fallback "
+                f"({self.ollama_client.model}) at {self.ollama_client.base_url}"
+            )
+            response = self.ollama_client.generate_stage1_response(prompt)
+            logger.info("Stage 1 response generated via Ollama fallback")
+            return response
+        except ProviderError as e:
+            logger.error(f"Ollama fallback failed: {e}")
+            raise
+        except Exception as e:
+            logger.error(
+                f"Unexpected error during Ollama fallback: {type(e).__name__}: {e}"
+            )
+            raise ProviderUnavailableError(f"Ollama fallback failed: {e}")
+
+    def _handle_gemini_error(self, error: Exception) -> ProviderError:
+        """
+        Map google-genai SDK errors to custom ProviderError types.
+
+        Args:
+            error: Exception from google-genai SDK
+
+        Returns:
+            ProviderError subclass matching the error type
+
+        Raises:
+            The original exception if it cannot be mapped
+        """
+        error_name = type(error).__name__
+        error_message = str(error).lower()
+
+        try:
+            # Try to import google API error types
+            from google.api_core import exceptions as google_exceptions
+        except ImportError:
+            # If google.api_core not available, fall back to string matching
+            google_exceptions = None
+
+        # Check for quota/rate limit errors (includes credit exhaustion)
+        if google_exceptions and isinstance(error, google_exceptions.ResourceExhausted):
+            logger.warning("Gemini ResourceExhausted: quota, rate limit, or credits exhausted")
+            return ProviderQuotaError(
+                "Gemini quota exhausted or credits depleted. Falling back to Ollama."
+            )
+        if "quota" in error_message or "rate_limit" in error_message:
+            return ProviderQuotaError(f"Gemini quota error: {error}")
+        if "resource" in error_message and "exhausted" in error_message:
+            return ProviderQuotaError(f"Gemini resources exhausted: {error}")
+        if "429" in error_message or "too many requests" in error_message:
+            return ProviderQuotaError(f"Gemini rate limited (429): {error}")
+
+        # Check for timeout errors
+        if google_exceptions and isinstance(error, google_exceptions.DeadlineExceeded):
+            logger.warning("Gemini DeadlineExceeded: request timed out")
+            return ProviderTimeoutError("Gemini request timed out")
+        if "deadline" in error_message or "timeout" in error_message:
+            return ProviderTimeoutError(f"Gemini timeout: {error}")
+
+        # Check for server/unavailable errors
+        if google_exceptions and isinstance(
+            error, google_exceptions.ServiceUnavailable
+        ):
+            logger.warning("Gemini ServiceUnavailable")
+            return ProviderServerError("Gemini service temporarily unavailable")
+        if google_exceptions and isinstance(error, google_exceptions.InternalServerError):
+            logger.warning("Gemini InternalServerError")
+            return ProviderServerError("Gemini internal server error")
+        if "service" in error_message and "unavailable" in error_message:
+            return ProviderServerError(f"Gemini unavailable: {error}")
+        if "500" in error_message or "503" in error_message:
+            return ProviderServerError(f"Gemini server error: {error}")
+
+        # Check for connection/availability errors
+        if "connection" in error_message or "unable to connect" in error_message:
+            logger.warning(f"Gemini connection error: {error}")
+            return ProviderUnavailableError(f"Cannot reach Gemini: {error}")
+        if "ssl" in error_message or "certificate" in error_message:
+            logger.warning(f"Gemini SSL/TLS error: {error}")
+            return ProviderUnavailableError(f"Gemini SSL error: {error}")
+
+        # For unmapped errors, return as a generic ProviderError for consistency
+        logger.warning(f"Unmapped Gemini error: {error_name}: {error}")
+        return ProviderUnavailableError(f"Gemini error: {error}")

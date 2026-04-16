@@ -4,7 +4,7 @@ from typing import Union
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.dependencies import get_artifact, get_extractor, get_predictor
+from app.api.dependencies import get_artifact, get_extractor, get_predictor, get_interpreter
 from app.core.validators import compute_missing_features, is_complete
 from app.models.feature_models import PropertyFeaturesComplete, PropertyFeaturesPartial
 from app.models.request_models import PredictRequest
@@ -16,6 +16,7 @@ from app.models.response_models import (
 from app.ml.loader import ModelArtifact
 from app.ml.predictor import Predictor, PredictionError
 from app.llm.extractor import Stage1Extractor
+from app.llm.interpreter import Stage2Interpreter
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,7 @@ async def predict(
     request: PredictRequest,
     extractor: Stage1Extractor = Depends(get_extractor),
     predictor: Predictor = Depends(get_predictor),
+    interpreter: Stage2Interpreter = Depends(get_interpreter),
 ) -> Union[IncompleteFeatureResponse, PredictionResponse]:
     """
     Main prediction endpoint.
@@ -64,12 +66,13 @@ async def predict(
     2. Merge with feature_overrides (overrides are the accumulated known state)
     3. Check completeness
     4. If incomplete: return needs_more_info with missing fields
-    5. If complete: validate, run prediction, return result
+    5. If complete: validate, run prediction, run interpretation, return result
     
     Args:
         request: PredictRequest with query and optional feature_overrides
         extractor: Stage1Extractor service (injected)
         predictor: Predictor service (injected)
+        interpreter: Stage2Interpreter service (injected)
     
     Returns:
         IncompleteFeatureResponse if features are incomplete
@@ -135,13 +138,30 @@ async def predict(
                 detail="Prediction service failed",
             ) from e
 
-        # Build response
+        # Run Stage 2 interpretation
+        try:
+            logger.info("Running Stage 2 interpretation")
+            global_stats = predictor.get_global_stats()
+            interpretation = interpreter.interpret(
+                complete_features=complete_features,
+                predicted_price=predicted_price,
+                global_stats=global_stats,
+            )
+        except Exception as e:
+            logger.error(f"Interpretation failed: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Interpretation service failed",
+            ) from e
+
+        # Build response with interpretation
         global_stats = predictor.get_global_stats()
         return PredictionResponse(
             status="success",
             accumulated_features=complete_features,
             predicted_price=predicted_price,
             global_stats=global_stats,
+            interpretation=interpretation,
         )
 
     except HTTPException:

@@ -74,3 +74,43 @@ def get_cached_stage1_prompt(version: str = "v1") -> str:
     
     return _prompt_cache[cache_key]
 
+
+def load_interpretation_prompt(version: str = "v1") -> str:
+    """
+    Load the Stage 2 interpretation prompt.
+    
+    Args:
+        version: Prompt version ("v1")
+    
+    Returns:
+        Prompt text with template variables ready for injection
+    
+    Raises:
+        ValueError: If version is not supported
+        FileNotFoundError: If the prompt file doesn't exist
+    """
+    if version not in ("v1",):
+        raise ValueError(f"Unsupported prompt version: {version}. Use 'v1'.")
+    
+    # Map version to actual filename: v1 -> interpret_v1.txt
+    filename = f"interpret_{version}.txt"
+    return load_prompt(filename)
+
+
+def get_cached_interpretation_prompt(version: str = "v1") -> str:
+    """
+    Get Stage 2 interpretation prompt with caching to avoid repeated file I/O.
+    
+    Args:
+        version: Prompt version ("v1")
+    
+    Returns:
+        Cached prompt text
+    """
+    cache_key = f"interpret_{version}"
+    
+    if cache_key not in _prompt_cache:
+        _prompt_cache[cache_key] = load_interpretation_prompt(version)
+    
+    return _prompt_cache[cache_key]
+

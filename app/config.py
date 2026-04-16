@@ -24,13 +24,13 @@ class Settings(BaseSettings):
 
     # LLM Configuration (Gemini - Primary)
     gemini_api_key: str = ""  # Optional, for real API usage
-    gemini_model_name: str = "gemini-2.5-flash"
-    llm_use_mock: bool = True  # Default to mock for testing
+    gemini_model_name: str = "gemini-1.5-flash"
+    llm_use_mock: bool = False  # Default to mock for testing
 
     # LLM Fallback Configuration (Ollama - Local Dev Only)
     # These settings enable local Ollama as a fallback provider for Stage 1
     # Intended for development and local testing only, not production
-    llm_enable_fallback: bool = False  # Disable fallback by default (opt-in)
+    llm_enable_fallback: bool = True  # Disable fallback by default (opt-in)
     llm_fallback_on_quota: bool = True  # Fallback when Gemini hits quota/rate-limit
     llm_fallback_on_timeout: bool = True  # Fallback when Gemini times out
     llm_fallback_on_5xx: bool = True  # Fallback when Gemini returns 5xx error

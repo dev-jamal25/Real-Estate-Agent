@@ -11,6 +11,7 @@ from app.config import settings
 from app.ml.loader import ModelArtifact
 from app.ml.predictor import Predictor
 from app.llm.extractor import Stage1Extractor
+from app.llm.interpreter import Stage2Interpreter
 from app.models.feature_models import PropertyFeaturesPartial, PropertyFeaturesComplete
 from app.models.response_models import Stage1ExtractionResult
 
@@ -61,8 +62,13 @@ def mock_artifact():
             ],
             "metadata": {"version": "1.0"},
             "global_stats": {
-                "target_mean": 180921.0,
-                "target_std": 79442.5,
+                "mean_price": 180921.0,
+                "median_price": 163000.0,
+                "min_price": 34900.0,
+                "max_price": 755000.0,
+                "q1_price": 129975.0,
+                "q3_price": 235000.0,
+                "typical_range": "129975.0 - 235000.0",
             },
         },
         "test_artifact",
@@ -82,7 +88,18 @@ def mock_extractor():
 
 
 @pytest.fixture
-def client(mock_artifact, mock_predictor, mock_extractor):
+def mock_interpreter():
+    """Create a mock interpreter."""
+    mock = Mock(spec=Stage2Interpreter)
+    mock.interpret.return_value = (
+        "This prediction falls within the typical range. "
+        "The above-average quality and spacious living area support this estimate."
+    )
+    return mock
+
+
+@pytest.fixture
+def client(mock_artifact, mock_predictor, mock_extractor, mock_interpreter):
     """Create a test client with dependencies mocked."""
     app = create_test_app()
     
@@ -90,6 +107,7 @@ def client(mock_artifact, mock_predictor, mock_extractor):
     dependencies.set_artifact(mock_artifact)
     dependencies.set_predictor(mock_predictor)
     dependencies.set_extractor(mock_extractor)
+    dependencies.set_interpreter(mock_interpreter)
     
     return TestClient(app)
 
@@ -340,6 +358,113 @@ class TestPredictEndpointComplete:
         ]
         for field in required_fields:
             assert field in features, f"Missing field {field}"
+
+    def test_predict_complete_includes_interpretation(self, client, mock_extractor, mock_interpreter):
+        """Test /predict response includes Stage 2 interpretation."""
+        mock_extractor.extract.return_value = Stage1ExtractionResult(
+            extracted_features=PropertyFeaturesPartial(
+                OverallQual=8,
+                GrLivArea=1850.0,
+                TotalBsmtSF=900.0,
+                GarageCars=2,
+                Neighborhood="CollgCr",
+                ExterQual="Gd",
+                YearBuilt=1998,
+                FullBath=2,
+                KitchenQual="Gd",
+                BsmtQual="Gd",
+                TotRmsAbvGrd=8,
+                LotArea=8200.0,
+            ),
+            missing_features=[],
+            is_complete=True,
+            assistant_message="Ready.",
+        )
+
+        response = client.post(
+            "/predict",
+            json={"query": "complete", "feature_overrides": None},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "interpretation" in data
+        assert isinstance(data["interpretation"], str)
+        assert len(data["interpretation"]) > 0
+
+    def test_predict_complete_calls_interpreter_with_correct_args(
+        self, client, mock_extractor, mock_interpreter
+    ):
+        """Test /predict calls interpreter with complete features, price, and stats."""
+        mock_extractor.extract.return_value = Stage1ExtractionResult(
+            extracted_features=PropertyFeaturesPartial(
+                OverallQual=8,
+                GrLivArea=1850.0,
+                TotalBsmtSF=900.0,
+                GarageCars=2,
+                Neighborhood="CollgCr",
+                ExterQual="Gd",
+                YearBuilt=1998,
+                FullBath=2,
+                KitchenQual="Gd",
+                BsmtQual="Gd",
+                TotRmsAbvGrd=8,
+                LotArea=8200.0,
+            ),
+            missing_features=[],
+            is_complete=True,
+            assistant_message="Ready.",
+        )
+
+        response = client.post(
+            "/predict",
+            json={"query": "complete", "feature_overrides": None},
+        )
+
+        assert response.status_code == 200
+
+        # Verify interpreter was called with correct args
+        mock_interpreter.interpret.assert_called_once()
+        call_args = mock_interpreter.interpret.call_args
+
+        # Check that complete_features is PropertyFeaturesComplete
+        complete_features = call_args[1]["complete_features"]
+        assert isinstance(complete_features, PropertyFeaturesComplete)
+        assert complete_features.OverallQual == 8
+        assert complete_features.GrLivArea == 1850.0
+
+        # Check predicted_price
+        predicted_price = call_args[1]["predicted_price"]
+        assert isinstance(predicted_price, float)
+        assert predicted_price == 250000.0
+
+        # Check global_stats
+        global_stats = call_args[1]["global_stats"]
+        assert isinstance(global_stats, dict)
+        assert "target_mean" in global_stats
+
+    def test_predict_incomplete_does_not_call_interpreter(
+        self, client, mock_extractor, mock_interpreter
+    ):
+        """Test /predict does NOT call interpreter when features incomplete."""
+        mock_extractor.extract.return_value = Stage1ExtractionResult(
+            extracted_features=PropertyFeaturesPartial(OverallQual=8),
+            missing_features=["GrLivArea", "TotalBsmtSF"],
+            is_complete=False,
+            assistant_message="Need more.",
+        )
+
+        response = client.post(
+            "/predict",
+            json={"query": "incomplete", "feature_overrides": None},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "needs_more_info"
+
+        # Interpreter should NOT have been called
+        mock_interpreter.interpret.assert_not_called()
 
 
 class TestPredictEndpointErrors:

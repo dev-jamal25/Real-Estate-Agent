@@ -7,6 +7,7 @@ from fastapi import Depends
 from app.config import settings
 from app.llm.client import GeminiClient
 from app.llm.extractor import Stage1Extractor
+from app.llm.interpreter import Stage2Interpreter
 from app.ml.loader import ArtifactLoader, ModelArtifact
 from app.ml.predictor import Predictor
 
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 _artifact: Optional[ModelArtifact] = None
 _predictor: Optional[Predictor] = None
 _extractor: Optional[Stage1Extractor] = None
+_interpreter: Optional[Stage2Interpreter] = None
 
 
 def set_artifact(artifact: ModelArtifact) -> None:
@@ -34,6 +36,12 @@ def set_extractor(extractor: Stage1Extractor) -> None:
     """Set the global extractor instance during startup."""
     global _extractor
     _extractor = extractor
+
+
+def set_interpreter(interpreter: Stage2Interpreter) -> None:
+    """Set the global interpreter instance during startup."""
+    global _interpreter
+    _interpreter = interpreter
 
 
 def get_artifact() -> ModelArtifact:
@@ -55,4 +63,11 @@ def get_extractor() -> Stage1Extractor:
     if _extractor is None:
         raise RuntimeError("Extractor not initialized during startup")
     return _extractor
+
+
+def get_interpreter() -> Stage2Interpreter:
+    """Dependency: return Stage 2 interpreter service."""
+    if _interpreter is None:
+        raise RuntimeError("Interpreter not initialized during startup")
+    return _interpreter
 

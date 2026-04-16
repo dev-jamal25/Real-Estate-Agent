@@ -10,6 +10,7 @@ from app.api import dependencies, routes
 from app.config import settings
 from app.llm.client import GeminiClient
 from app.llm.extractor import Stage1Extractor
+from app.llm.interpreter import Stage2Interpreter
 from app.ml.loader import ArtifactLoader, ArtifactLoadError
 from app.ml.predictor import Predictor
 
@@ -55,6 +56,11 @@ async def lifespan(app: FastAPI):
         if settings.llm_enable_fallback and settings.ollama_enabled:
             mode_str += f" (with Ollama fallback at {settings.ollama_base_url})"
         logger.info(f"Extractor initialized with {mode_str} LLM client")
+
+        # Initialize interpreter
+        interpreter = Stage2Interpreter(llm_client=llm_client, prompt_version="v1")
+        dependencies.set_interpreter(interpreter)
+        logger.info("Interpreter initialized with LLM client")
 
         logger.info("Application startup complete")
     except ArtifactLoadError as e:

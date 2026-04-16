@@ -140,10 +140,13 @@ class PredictionResponse(BaseModel):
                 },
                 "predicted_price": 245000.50,
                 "global_stats": {
-                    "target_mean": 180921.0,
-                    "target_std": 79442.5,
-                    "target_min": 34900.0,
-                    "target_max": 755000.0,
+                    "mean_price": 180921.0,
+                    "median_price": 163000.0,
+                    "min_price": 34900.0,
+                    "max_price": 755000.0,
+                    "q1_price": 129975.0,
+                    "q3_price": 235000.0,
+                    "typical_range": "129975.0 - 235000.0",
                 },
             }
         }
@@ -161,5 +164,8 @@ class PredictionResponse(BaseModel):
     )
     global_stats: Dict[str, Any] = Field(
         description="Global statistics from model artifact (e.g., target mean/std)",
+    )
+    interpretation: str = Field(
+        description="Human-friendly explanation of the prediction grounded in feature values and global statistics"
     )
 
