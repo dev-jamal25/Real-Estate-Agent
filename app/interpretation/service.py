@@ -3,6 +3,10 @@ import json
 import logging
 from typing import Any, Dict, Optional
 
+from app.core.display_mapping import (
+    get_feature_display_name,
+    get_feature_display_value,
+)
 from app.core.exceptions import LLMException
 from app.llm.openrouter_client import OpenRouterClient
 from app.llm.prompt_loader import load_interpret_prompt
@@ -92,10 +96,15 @@ class InterpretationService:
         Returns:
             Formatted user message for LLM
         """
-        # Format features as a readable string
-        features_str = "\n  ".join(
-            f"{k}: {v}" for k, v in complete_features.items()
-        )
+        # Format features using friendly display names and values
+        features_lines = []
+        for feature_name in sorted(complete_features.keys()):
+            feature_value = complete_features[feature_name]
+            display_name = get_feature_display_name(feature_name)
+            display_value = get_feature_display_value(feature_name, feature_value)
+            features_lines.append(f"  {display_name}: {display_value}")
+        
+        features_str = "\n".join(features_lines)
 
         # Extract statistics safely and format them
         def format_stat(key: str, value_or_none: Any) -> str:
@@ -117,7 +126,7 @@ class InterpretationService:
         # Build context
         context = f"""
 Features:
-  {features_str}
+{features_str}
 
 Predicted Price: ${predicted_price:,.2f}
 

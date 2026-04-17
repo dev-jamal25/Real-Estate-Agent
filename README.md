@@ -52,6 +52,27 @@ pytest tests/test_extraction_service.py -v
 pytest tests/ --cov=app --cov-report=html
 ```
 
+### Run Backend Server
+
+```bash
+# Start the FastAPI backend (default: http://127.0.0.1:8000)
+uvicorn app.main:app --reload
+```
+
+### Run Streamlit UI
+
+```bash
+# In a separate terminal, start the Streamlit app (default: http://localhost:8501)
+streamlit run ui/streamlit_app.py
+```
+
+The Streamlit UI provides a chat-style interface for the real estate price prediction. It:
+- Maintains conversation state locally (chat history, accumulated features)
+- Sends each user message + accumulated state to the backend `/predict` endpoint
+- Displays the LLM extraction reply and collected features
+- Shows the final prediction and interpretation when all features are complete
+- Allows resetting the conversation for new predictions
+
 ### Run Prompt Evaluation
 
 ```bash

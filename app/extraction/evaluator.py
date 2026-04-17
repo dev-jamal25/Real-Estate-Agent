@@ -52,16 +52,6 @@ class ExtractionEvaluator:
     def evaluate(
         self, versions: List[str] = None, mock_responses: Dict[str, Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
-        """Evaluate extraction prompts on test cases.
-        
-        Args:
-            versions: Prompt versions to evaluate (default ["v1", "v2"])
-            mock_responses: Dict mapping 'v1' and 'v2' to mock response dicts
-                           (for testing without real API calls)
-        
-        Returns:
-            List of evaluation result dicts
-        """
         if versions is None:
             versions = ["v1", "v2"]
 
@@ -103,16 +93,6 @@ class ExtractionEvaluator:
         user_message: str,
         mock_responses: Dict[str, Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        """Evaluate a single prompt version on a case.
-        
-        Args:
-            version: Prompt version ("v1" or "v2")
-            user_message: Test user message
-            mock_responses: Dict with mock LLM responses
-            
-        Returns:
-            Result dict with output and validation status
-        """
         # Create client (use mock if provided)
         if mock_responses and version in mock_responses:
             client = MockOpenRouterClient(mock_responses[version])

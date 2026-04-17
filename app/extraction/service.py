@@ -19,14 +19,8 @@ class ExtractionService:
     def __init__(
         self,
         client: Optional[OpenRouterClient] = None,
-        prompt_version: str = "v1",
+        prompt_version: str = "v2",
     ):
-        """Initialize the extraction service.
-        
-        Args:
-            client: OpenRouter client (if None, creates default)
-            prompt_version: Extraction prompt version ("v1" or "v2")
-        """
         self.client = client or OpenRouterClient()
         self.prompt_version = prompt_version
 
@@ -35,18 +29,6 @@ class ExtractionService:
         latest_message: str,
         accumulated_state: Optional[Dict[str, Any]] = None,
     ) -> Stage1Response:
-        """Extract features from user message and accumulated state.
-        
-        Args:
-            latest_message: Latest user input message
-            accumulated_state: Dict of previously extracted features (may include None values)
-            
-        Returns:
-            Stage1Response with extracted features, missing list, completeness, and reply
-            
-        Raises:
-            ExtractionException: If extraction or normalization fails
-        """
         if accumulated_state is None:
             accumulated_state = {}
 

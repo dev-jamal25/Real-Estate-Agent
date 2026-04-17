@@ -17,17 +17,6 @@ class PromptLoader:
         self._cache: Dict[str, str] = {}
 
     def load_extract_prompt(self, version: str) -> str:
-        """Load extraction prompt by version.
-        
-        Args:
-            version: Prompt version ("v1" or "v2")
-            
-        Returns:
-            Prompt text
-            
-        Raises:
-            PromptLoadException: If prompt file not found
-        """
         cache_key = f"extract_{version}"
         if cache_key in self._cache:
             return self._cache[cache_key]

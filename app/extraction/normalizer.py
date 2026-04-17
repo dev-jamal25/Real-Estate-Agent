@@ -61,6 +61,50 @@ class FeatureNormalizer:
         )
 
     @staticmethod
+    def _has_ambiguous_range(value_str: str) -> bool:
+        """Detect if the value looks like an ambiguous range or approximation.
+        
+        Examples that should be detected:
+        - "1-10" (dash range)
+        - "2000-2010" (year range)
+        - "around 2000-2010" (approximate range)
+        - "between 800 and 1000" (between...and)
+        - "800 to 1000" (to connector)
+        
+        Args:
+            value_str: The value string to check
+            
+        Returns:
+            True if the value appears to be a range or approximation
+        """
+        lower = value_str.lower()
+        
+        # Check for range indicators
+        if "-" in value_str and value_str.count("-") >= 1:
+            # Check if it's not a negative number (e.g., "-5")
+            # A range would have pattern like "1-10" or "2000-2010"
+            parts = value_str.split("-")
+            if len(parts) >= 2 and parts[0].strip() and parts[1].strip():
+                # Both sides of dash have content, likely a range
+                return True
+        
+        # Check for explicit range indicators
+        if " to " in lower:
+            return True
+        
+        if " and " in lower and ("between" in lower or "range" in lower):
+            return True
+        
+        if "around" in lower or "approximately" in lower or "circa" in lower:
+            return True
+        
+        if "or" in lower and any(c.isdigit() for c in value_str.split("or")[0]):
+            # "5 or 6" type patterns
+            return True
+        
+        return False
+
+    @staticmethod
     def _normalize_numeric(feature_name: str, value_str: str) -> Optional[int | float]:
         """Normalize numeric value.
         
@@ -72,8 +116,17 @@ class FeatureNormalizer:
             Converted numeric value or None
             
         Raises:
-            NormalizationException: If value cannot be converted
+            NormalizationException: If value cannot be converted or is ambiguous
         """
+        # First check for ambiguous ranges
+        if FeatureNormalizer._has_ambiguous_range(value_str):
+            logger.info(
+                f"Rejecting ambiguous range for {feature_name}: {value_str}"
+            )
+            raise NormalizationException(
+                f"Ambiguous or range value for {feature_name} (need exact value): {value_str}"
+            )
+        
         try:
             # Try int first
             if "." not in value_str:
