@@ -3,6 +3,8 @@ import sys
 import os
 
 BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://127.0.0.1:8000")
+HEALTH_ENDPOINT = f"{BACKEND_BASE_URL}/health"
+PREDICT_ENDPOINT = f"{BACKEND_BASE_URL}/predict"
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
