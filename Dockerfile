@@ -1,17 +1,18 @@
 # Stage 1: Build
-FROM python:3.12-slim AS builder
+FROM python:3.12-slim-bookworm AS builder
 
 WORKDIR /build
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install --fix-missing -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY requirements-backend.txt .
+
 
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements-backend.txt
 
 # Stage 2: Runtime
 FROM python:3.12-slim
